@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Play the TOSEKI browser prototype against the CPU." />
+  <meta name="theme-color" content="#f4efe4" />
+  <title>Play TOSEKI / 渡石</title>
+  <style>
+    :root{
+      --paper:#f4efe4;--ink:#171717;--muted:#6b665f;--panel:rgba(255,255,255,.62);--line:rgba(23,23,23,.18);
+      --accent:#9b3d2f;--accent2:#29485f;--river:#b8d9e7;--mountain:#82796c;--supply:#d4aa47;
+      --start:rgba(72,108,84,.12);--goal:rgba(190,152,72,.17);--legal:rgba(56,126,82,.33);--selected:rgba(155,61,47,.23);
+      --danger:#a33a31;--ok:#2f7650;--radius:22px;--shadow:0 16px 44px rgba(52,41,24,.09)
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(155,61,47,.08),transparent 25rem),radial-gradient(circle at 92% 14%,rgba(41,72,95,.08),transparent 24rem),var(--paper);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+    button,a{font:inherit} button{touch-action:manipulation}.wrap{width:min(1080px,calc(100% - 24px));margin:0 auto}.topbar{border-bottom:1px solid var(--line);background:rgba(244,239,228,.9)}
+    .topinner{min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{font-weight:850;letter-spacing:.06em;text-decoration:none;color:inherit}.back{color:var(--muted);text-decoration:none;font-size:.9rem}
+    header{padding:38px 0 24px}.eyebrow{font-size:.74rem;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);font-weight:850}h1{margin:.15em 0 .2em;font-size:clamp(2.4rem,7vw,4.8rem);line-height:.95;letter-spacing:-.045em}header p{max-width:760px;color:var(--muted);margin:.6em 0 0}
+    .game-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;align-items:start;padding-bottom:54px}.board-panel,.side-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}.board-panel{padding:16px}.side{display:grid;gap:14px}.side-card{padding:16px}
+    .board-meta{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}.phase-title{font-weight:850;font-size:1.08rem}.phase-help{font-size:.85rem;color:var(--muted);margin-top:3px;max-width:540px}.turnbox{text-align:right;white-space:nowrap}.turnbox b{font-size:1.4rem}.turnbox span{display:block;color:var(--muted);font-size:.75rem}
+    .axis-top,.axis-bottom{display:grid;grid-template-columns:repeat(9,1fr);font-size:.68rem;color:var(--muted);text-align:center;margin:0 0 4px}.axis-bottom{margin:4px 0 0}.board-wrap{position:relative}.board{display:grid;grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);aspect-ratio:1;border:3px solid rgba(23,23,23,.78);background:#efe8d9;user-select:none;-webkit-user-select:none}
+    .cell{position:relative;border-right:1.35px solid rgba(23,23,23,.46);border-bottom:1.35px solid rgba(23,23,23,.46);display:grid;place-items:center;min-width:0;padding:0;background:transparent;color:inherit}.cell:nth-child(9n){border-right:0}.cell:nth-last-child(-n+9){border-bottom:0}.cell:focus-visible{outline:3px solid #111;outline-offset:-4px;z-index:5}.cell.start-zone{background:var(--start)}.cell.goal-zone{background:var(--goal)}
+    .cell.river{background:linear-gradient(135deg,rgba(255,255,255,.32),transparent),var(--river)}.cell.bridge{background:repeating-linear-gradient(90deg,#bf9157 0 5px,#dfbd87 5px 10px)}.cell.mountain::before{content:"";width:60%;height:60%;background:var(--mountain);clip-path:polygon(50% 8%,100% 92%,0 92%);opacity:.92}.cell.supply::after{content:"◆";position:absolute;color:#8f6500;font-size:clamp(.6rem,2.5vw,1.25rem);text-shadow:0 1px 0 #fff8}
+    .cell.legal{box-shadow:inset 0 0 0 4px var(--legal);cursor:pointer}.cell.legal::before{content:"";position:absolute;width:20%;aspect-ratio:1;border-radius:50%;background:var(--ok);opacity:.7}.cell.selected-cell{box-shadow:inset 0 0 0 4px var(--selected)}.cell.trap-pick{box-shadow:inset 0 0 0 4px rgba(163,58,49,.45)}.cell.triggered{background-image:radial-gradient(circle,rgba(163,58,49,.20),transparent 62%)}
+    .piece{position:relative;z-index:2;width:70%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:clamp(.43rem,1.7vw,.82rem);border:2px solid rgba(255,255,255,.72);box-shadow:0 2px 8px #0003;pointer-events:none}.piece.human{background:var(--accent);color:white}.piece.cpu{background:var(--accent2);color:white}.piece.fast{border-width:4px}.piece.leader::after{content:"★";font-size:.8em}.piece.stunned{filter:grayscale(.55);opacity:.58}.piece.cpu-thinking{outline:4px solid rgba(41,72,95,.22);outline-offset:2px}
+    .trap-marker{position:absolute;z-index:3;right:8%;top:6%;font-size:clamp(.55rem,2vw,.95rem);color:var(--danger);font-weight:950;text-shadow:0 1px #fff}.goal-label,.start-label{position:absolute;left:8px;z-index:4;font-size:.64rem;font-weight:900;letter-spacing:.13em;padding:3px 7px;border-radius:999px;background:rgba(255,255,255,.78);border:1px solid var(--line);pointer-events:none}.goal-label{top:8px}.start-label{bottom:8px}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.btn{min-height:44px;border-radius:999px;border:1px solid rgba(23,23,23,.38);background:rgba(255,255,255,.56);color:var(--ink);padding:9px 14px;font-weight:760;cursor:pointer}.btn:hover{background:rgba(255,255,255,.85)}.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}.btn.active{background:var(--accent);color:white;border-color:var(--accent)}.btn:disabled{opacity:.38;cursor:not-allowed}.btn.danger{color:var(--danger)}
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{padding:10px 11px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.4)}.stat span{display:block;color:var(--muted);font-size:.72rem}.stat b{font-size:1.15rem}.status{font-size:.9rem;color:var(--muted)}.status strong{color:var(--ink)}.log{display:grid;gap:7px;max-height:220px;overflow:auto;padding-right:2px}.log-entry{font-size:.82rem;border-left:2px solid var(--line);padding-left:9px;color:var(--muted)}.log-entry.hot{border-color:var(--danger);color:var(--ink)}
+    .scoreline{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.9rem}.scoreline:last-child{border-bottom:0}.scoreline b{text-align:right}.result{border-left:3px solid var(--accent);padding-left:12px}.result.win{border-color:var(--ok)}.result.loss{border-color:var(--danger)}details{font-size:.84rem;color:var(--muted)}summary{cursor:pointer;color:var(--ink);font-weight:750}.small{font-size:.78rem;color:var(--muted)}
+    .live{min-height:1.4em;margin-top:10px;font-size:.88rem;color:var(--muted)}
+    @media(max-width:840px){.game-layout{grid-template-columns:1fr}.side{grid-template-columns:1fr 1fr}.side-card.full{grid-column:1/-1}}
+    @media(max-width:600px){.wrap{width:min(100% - 14px,1080px)}header{padding-top:26px}.board-panel{padding:9px;border-radius:16px}.board-meta{margin-bottom:8px}.phase-help{font-size:.78rem}.turnbox b{font-size:1.15rem}.side{grid-template-columns:1fr}.side-card.full{grid-column:auto}.piece{width:74%}.goal-label,.start-label{font-size:.54rem;padding:2px 5px}.toolbar{gap:6px}.btn{padding:8px 11px;min-height:42px}.axis-top,.axis-bottom{font-size:.6rem}}
+  </style>
+</head>
+<body>
+  <div class="topbar"><div class="wrap topinner"><a class="brand" href="index.html">TOSEKI / 渡石</a><a class="back" href="index.html">← Game page</a></div></div>
+  <header class="wrap"><div class="eyebrow">Browser Prototype · Human vs CPU</div><h1>Play TOSEKI</h1><p>This prototype follows the v3.5 basic time-attack format: you make one run, then the CPU makes its run on the same map. Each defender hides three traps before the other side starts.</p></header>
+
+  <main class="wrap game-layout">
+    <section class="board-panel">
+      <div class="board-meta">
+        <div><div class="phase-title" id="phaseTitle">Deploy your pieces</div><div class="phase-help" id="phaseHelp">Place four normal pieces and two fast pieces in the bottom two rows, then choose one leader.</div></div>
+        <div class="turnbox"><b id="turnValue">0</b><span id="turnLabel">turns</span></div>
+      </div>
+      <div class="axis-top" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span></div>
+      <div class="board-wrap">
+        <div class="goal-label" id="goalLabel">GOAL</div>
+        <div class="start-label" id="startLabel">START</div>
+        <div class="board" id="board" role="grid" aria-label="TOSEKI 9 by 9 board"></div>
+      </div>
+      <div class="axis-bottom" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span></div>
+      <div class="toolbar" id="toolbar">
+        <button class="btn active" type="button" id="normalBtn">Place normal</button>
+        <button class="btn" type="button" id="fastBtn">Place fast</button>
+        <button class="btn" type="button" id="leaderBtn">Choose leader</button>
+        <button class="btn" type="button" id="quickBtn">Quick setup</button>
+        <button class="btn primary" type="button" id="primaryBtn" disabled>Start your run</button>
+        <button class="btn danger" type="button" id="restartBtn">Restart</button>
+      </div>
+      <div class="live" id="liveMessage" aria-live="polite"></div>
+    </section>
+
+    <aside class="side">
+      <section class="side-card">
+        <h2 style="font-size:1rem;margin:0 0 10px">Score</h2>
+        <div class="stats">
+          <div class="stat"><span>Speed bonus</span><b id="speedStat">10,000</b></div>
+          <div class="stat"><span>Supplies</span><b id="supplyStat">0</b></div>
+          <div class="stat"><span>Leader penalty</span><b id="penaltyStat">0</b></div>
+          <div class="stat"><span>Current total</span><b id="totalStat">10,000</b></div>
+        </div>
+      </section>
+
+      <section class="side-card">
+        <h2 style="font-size:1rem;margin:0 0 8px">Match status</h2>
+        <div class="status" id="matchStatus"><strong>You are first.</strong> Build your starting formation.</div>
+        <div id="resultBox" style="margin-top:12px"></div>
+      </section>
+
+      <section class="side-card full">
+        <h2 style="font-size:1rem;margin:0 0 8px">Move log</h2>
+        <div class="log" id="log" aria-live="polite"><div class="log-entry">Game ready.</div></div>
+      </section>
+
+      <section class="side-card full">
+        <details>
+          <summary>Prototype implementation notes</summary>
+          <p>The advanced boat rule is not included in this first browser build. A fast piece may move one or two orthogonal cells but cannot jump over terrain or another piece.</p>
+          <p>For this digital prototype, a trap is consumed after it triggers. If a two-cell fast move crosses a hidden trap on the intermediate cell, the piece stops there and triggers it.</p>
+          <p>During the CPU run, the CPU move evaluator receives only terrain, pieces, supplies and already-triggered trap information. It does not receive your hidden trap coordinates.</p>
+        </details>
+      </section>
+    </aside>
+  </main>
+
+<script>
+(() => {
+  'use strict';
+  const SIZE = 9;
+  const MAX_CPU_TURNS = 60;
+  const COLS = 'ABCDEFGHI';
+  const $ = (id) => document.getElementById(id);
+  const boardEl = $('board');
+  const phaseTitle = $('phaseTitle');
+  const phaseHelp = $('phaseHelp');
+  const turnValue = $('turnValue');
+  const turnLabel = $('turnLabel');
+  const normalBtn = $('normalBtn');
+  const fastBtn = $('fastBtn');
+  const leaderBtn = $('leaderBtn');
+  const quickBtn = $('quickBtn');
+  const primaryBtn = $('primaryBtn');
+  const restartBtn = $('restartBtn');
+  const liveMessage = $('liveMessage');
+  const speedStat = $('speedStat');
+  const supplyStat = $('supplyStat');
+  const penaltyStat = $('penaltyStat');
+  const totalStat = $('totalStat');
+  const matchStatus = $('matchStatus');
+  const resultBox = $('resultBox');
+  const logEl = $('log');
+  const goalLabel = $('goalLabel');
+  const startLabel = $('startLabel');
+
+  const key = (r,c) => `${r},${c}`;
+  const fmt = (n) => Number(n).toLocaleString('en-US');
+  const coord = (r,c) => `${COLS[c]}${9-r}`;
+  const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+
+  // Symmetric fixed prototype map. Neutral zone is rows 3–7 in rulebook terms.
+  const baseTerrain = Array.from({length:SIZE}, () => Array(SIZE).fill('plain'));
+  for (let c=0;c<SIZE;c++) baseTerrain[4][c] = 'river';
+  baseTerrain[4][2] = 'bridge';
+  baseTerrain[4][6] = 'bridge';
+  baseTerrain[3][4] = 'mountain';
+  baseTerrain[5][4] = 'mountain';
+  const baseSupplies = new Set([key(2,1),key(2,7),key(6,1),key(6,7)]);
+
+  let state;
+  let cpuTimer = null;
+
+  function initialState(){
+    return {
+      phase:'human_setup', setupMode:'normal', selectedPiece:null, legalMoves:[],
+      humanPieces:[], cpuPieces:[], turn:0, supplyScore:0, leaderPenalty:0,
+      supplies:new Set(baseSupplies), activeTraps:new Set(), revealedTraps:new Set(), chosenHumanTraps:new Set(),
+      humanResult:null, cpuResult:null, cpuThinkingPiece:null, logs:['Game ready.'], winner:null
+    };
+  }
+
+  function speedBonus(turns){
+    if (turns <= 7) return 10000;
+    return Math.max(0, 17000 - turns * 1000);
+  }
+
+  function totalScore(){ return speedBonus(state.turn) + state.supplyScore - state.leaderPenalty; }
+
+  function addLog(text, hot=false){
+    state.logs.unshift({text,hot});
+    state.logs = state.logs.slice(0,18);
+  }
+
+  function isNeutral(r){ return r>=2 && r<=6; }
+  function isPassable(r,c){
+    if (r<0||r>=SIZE||c<0||c>=SIZE) return false;
+    const t = baseTerrain[r][c];
+    return t !== 'river' && t !== 'mountain';
+  }
+  function occupantAt(pieces,r,c,ignoreId=null){ return pieces.find(p => p.id!==ignoreId && p.r===r && p.c===c) || null; }
+  function currentPieces(){ return state.phase==='human_run' || state.phase==='human_setup' || state.phase==='human_result' ? state.humanPieces : state.cpuPieces; }
+  function currentSide(){ return (state.phase.startsWith('human_') && state.phase!=='human_traps') ? 'human' : 'cpu'; }
+
+  function generateMoves(piece,pieces,goalRow){
+    const nextTurn = state.turn + 1;
+    if (piece.blockedOnTurn === nextTurn) return [];
+    const out=[];
+    if (piece.type==='normal'){
+      for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++){
+        if (!dr && !dc) continue;
+        const r=piece.r+dr,c=piece.c+dc;
+        if (!isPassable(r,c) || occupantAt(pieces,r,c,piece.id)) continue;
+        out.push({r,c,path:[[r,c]]});
+      }
+    } else {
+      const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+      for (const [dr,dc] of dirs){
+        for (let d=1;d<=2;d++){
+          const r=piece.r+dr*d,c=piece.c+dc*d;
+          if (!isPassable(r,c) || occupantAt(pieces,r,c,piece.id)) break;
+          const path=[]; for(let s=1;s<=d;s++) path.push([piece.r+dr*s,piece.c+dc*s]);
+          out.push({r,c,path});
+        }
+      }
+    }
+    return out;
+  }
+
+  function reachableDistance(type,startR,startC,goalRow){
+    const q=[[startR,startC,0]], seen=new Set([key(startR,startC)]);
+    while(q.length){
+      const [r,c,d]=q.shift();
+      if (r===goalRow) return d;
+      if (type==='normal'){
+        for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+          if(!dr&&!dc) continue; const nr=r+dr,nc=c+dc,k=key(nr,nc);
+          if(!isPassable(nr,nc)||seen.has(k)) continue; seen.add(k);q.push([nr,nc,d+1]);
+        }
+      } else {
+        for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          for(let n=1;n<=2;n++){
+            const nr=r+dr*n,nc=c+dc*n,k=key(nr,nc);
+            if(!isPassable(nr,nc)) break;
+            if(!seen.has(k)){seen.add(k);q.push([nr,nc,d+1]);}
+          }
+        }
+      }
+    }
+    return 99;
+  }
+
+  function shortestPath(type,startR,startC,goalRow){
+    const q=[[startR,startC]], seen=new Set([key(startR,startC)]), prev=new Map();
+    let end=null;
+    while(q.length){
+      const [r,c]=q.shift();
+      if(r===goalRow){end=[r,c];break;}
+      const next=[];
+      if(type==='normal'){
+        for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) if(dr||dc) next.push([r+dr,c+dc]);
+      } else {
+        for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          const r1=r+dr,c1=c+dc;
+          if(isPassable(r1,c1)){
+            next.push([r1,c1]);
+            const r2=r+dr*2,c2=c+dc*2;
+            if(isPassable(r2,c2)) next.push([r2,c2]);
+          }
+        }
+      }
+      for(const [nr,nc] of next){const k=key(nr,nc);if(!isPassable(nr,nc)||seen.has(k))continue;seen.add(k);prev.set(k,[r,c]);q.push([nr,nc]);}
+    }
+    if(!end) return [];
+    const path=[]; let cur=end;
+    while(cur && !(cur[0]===startR&&cur[1]===startC)){path.push(cur);cur=prev.get(key(cur[0],cur[1]));}
+    return path.reverse();
+  }
+
+  function legalTrapCell(r,c){
+    return isNeutral(r) && baseTerrain[r][c]==='plain' && !baseSupplies.has(key(r,c));
+  }
+
+  function chooseCpuTraps(){
+    const leader=state.humanPieces.find(p=>p.leader);
+    const path=shortestPath(leader.type,leader.r,leader.c,0);
+    const pathSet=new Set(path.map(([r,c])=>key(r,c)));
+    const candidates=[];
+    for(let r=2;r<=6;r++) for(let c=0;c<SIZE;c++){
+      if(!legalTrapCell(r,c)) continue;
+      let score=Math.random()*6;
+      if(pathSet.has(key(r,c))) score+=70;
+      let minPath=99;
+      for(const [pr,pc] of path) minPath=Math.min(minPath,Math.abs(pr-r)+Math.abs(pc-c));
+      if(minPath===1) score+=24; else if(minPath===2) score+=9;
+      for(const s of baseSupplies){const [sr,sc]=s.split(',').map(Number);if(Math.abs(sr-r)+Math.abs(sc-c)===1)score+=14;}
+      for(const bc of [2,6]) if(Math.abs(r-4)+Math.abs(c-bc)===1) score+=18;
+      score += (3-Math.abs(r-4))*2;
+      candidates.push({r,c,score});
+    }
+    candidates.sort((a,b)=>b.score-a.score);
+    return new Set(candidates.slice(0,3).map(x=>key(x.r,x.c)));
+  }
+
+  function resetRun(side){
+    state.turn=0; state.supplyScore=0; state.leaderPenalty=0; state.supplies=new Set(baseSupplies);
+    state.activeTraps=new Set(); state.revealedTraps=new Set(); state.selectedPiece=null; state.legalMoves=[];
+    if(side==='human') state.activeTraps=chooseCpuTraps();
+  }
+
+  function applyMove(piece,move,side){
+    const pieces = side==='human' ? state.humanPieces : state.cpuPieces;
+    const old=[piece.r,piece.c];
+    let final=[move.r,move.c], hitTrap=null;
+    for(const [r,c] of move.path){
+      const k=key(r,c);
+      if(state.activeTraps.has(k)){ final=[r,c]; hitTrap=k; break; }
+    }
+    piece.r=final[0]; piece.c=final[1];
+    state.turn += 1;
+
+    let event=`${side==='human'?'You':'CPU'}: ${piece.type}${piece.leader?' leader':''} ${coord(old[0],old[1])} → ${coord(piece.r,piece.c)}.`;
+    if(hitTrap){
+      state.activeTraps.delete(hitTrap); state.revealedTraps.add(hitTrap);
+      if(piece.leader){ state.leaderPenalty += 3000; event += ' Trap! Leader −3,000.'; }
+      else { piece.blockedOnTurn = state.turn + 1; event += ' Trap! This piece cannot move next turn.'; }
+      addLog(event,true);
+      liveMessage.textContent = side==='human' ? 'Trap triggered.' : 'Your trap triggered.';
+    } else addLog(event,false);
+
+    const destKey=key(piece.r,piece.c);
+    if(state.supplies.has(destKey)){
+      state.supplies.delete(destKey);
+      const pts=piece.type==='normal'?2000:1500;
+      state.supplyScore += pts;
+      addLog(`${side==='human'?'You':'CPU'} collected a supply at ${coord(piece.r,piece.c)} (+${fmt(pts)}).`,false);
+    }
+
+    state.selectedPiece=null; state.legalMoves=[];
+    const goalRow = side==='human'?0:8;
+    if(piece.leader && piece.r===goalRow){ finishRun(side); return true; }
+    return false;
+  }
+
+  function finishRun(side){
+    const result={turns:state.turn,supply:state.supplyScore,penalty:state.leaderPenalty,score:totalScore(),leaderHit:state.leaderPenalty>0};
+    if(side==='human'){
+      state.humanResult=result; state.phase='human_result';
+      addLog(`Your run finished in ${result.turns} turns. Score: ${fmt(result.score)}.`,false);
+      if(result.score<5000){
+        state.winner='cpu'; state.phase='game_over';
+        addLog('CPU wins automatically because the first-player score is below 5,000.',true);
+      }
+    } else {
+      state.cpuResult=result;
+      const needed = state.humanResult.leaderHit ? state.humanResult.score+3001 : state.humanResult.score+1;
+      state.winner = result.score>=needed ? 'cpu' : 'human';
+      state.phase='game_over';
+      addLog(`CPU run finished in ${result.turns} turns. Score: ${fmt(result.score)}.`,false);
+    }
+    render();
+  }
+
+  function makeCpuSetup(){
+    const raw=[
+      ['N1','normal',0,1,false],['N2','normal',0,4,false],['N3','normal',0,7,false],['N4','normal',1,2,false],
+      ['F1','fast',1,4,true],['F2','fast',1,6,false]
+    ];
+    state.cpuPieces=raw.map(([id,type,r,c,leader])=>({id,type,r,c,leader,blockedOnTurn:null}));
+  }
+
+  function prepareCpuDefensePhase(){
+    makeCpuSetup(); state.chosenHumanTraps=new Set(); state.phase='human_traps'; state.turn=0; state.supplyScore=0; state.leaderPenalty=0;
+    state.supplies=new Set(baseSupplies); state.activeTraps=new Set(); state.revealedTraps=new Set();
+    addLog('CPU deployed six pieces. Choose three hidden traps in the neutral zone.',false); render();
+  }
+
+  function startCpuRun(){
+    state.phase='cpu_run'; state.turn=0; state.supplyScore=0; state.leaderPenalty=0; state.supplies=new Set(baseSupplies);
+    state.activeTraps=new Set(state.chosenHumanTraps); state.revealedTraps=new Set(); state.selectedPiece=null; state.legalMoves=[];
+    addLog('CPU run started. Your three trap coordinates are hidden from the CPU evaluator.',false); render();
+    scheduleCpuMove(500);
+  }
+
+  function cpuCandidateScore(piece,move){
+    // IMPORTANT: this evaluator intentionally does not read state.activeTraps.
+    const leader=state.cpuPieces.find(p=>p.leader);
+    const landingSupply=state.supplies.has(key(move.r,move.c)) ? (piece.type==='normal'?2000:1500) : 0;
+    const leaderR=piece.leader?move.r:leader.r, leaderC=piece.leader?move.c:leader.c;
+    const remaining=reachableDistance(leader.type,leaderR,leaderC,8);
+    const projectedTurn=state.turn+1+remaining;
+    let score=speedBonus(projectedTurn)+state.supplyScore+landingSupply-state.leaderPenalty;
+    if(piece.leader){
+      const before=reachableDistance(piece.type,piece.r,piece.c,8);
+      score += (before-remaining)*280 + 120;
+      if(move.r===8) score+=8000;
+    } else {
+      score += landingSupply*0.45;
+      let nearest=99;
+      for(const s of state.supplies){const [sr,sc]=s.split(',').map(Number);nearest=Math.min(nearest,Math.abs(sr-move.r)+Math.abs(sc-move.c));}
+      if(nearest<99) score += Math.max(0,3-nearest)*70;
+    }
+    // Triggered traps are consumed in this prototype, so revealed cells are safe afterwards.
+    score += Math.random()*28;
+    return score;
+  }
+
+  function chooseCpuMove(){
+    const candidates=[];
+    for(const piece of state.cpuPieces){
+      const moves=generateMoves(piece,state.cpuPieces,8);
+      for(const move of moves) candidates.push({piece,move,score:cpuCandidateScore(piece,move)});
+    }
+    if(!candidates.length) return null;
+    candidates.sort((a,b)=>b.score-a.score);
+    return candidates[0];
+  }
+
+  function scheduleCpuMove(delay){
+    clearTimeout(cpuTimer);
+    cpuTimer=setTimeout(()=>{
+      if(state.phase!=='cpu_run') return;
+      if(state.turn>=MAX_CPU_TURNS){
+        state.cpuResult={turns:state.turn,supply:state.supplyScore,penalty:state.leaderPenalty,score:0,leaderHit:state.leaderPenalty>0};
+        state.winner='human'; state.phase='game_over'; addLog('CPU failed to finish within the prototype safety limit.',true); render(); return;
+      }
+      const choice=chooseCpuMove();
+      if(!choice){state.cpuResult={turns:state.turn,supply:state.supplyScore,penalty:state.leaderPenalty,score:0,leaderHit:state.leaderPenalty>0};state.winner='human';state.phase='game_over';addLog('CPU has no legal move.',true);render();return;}
+      state.cpuThinkingPiece=choice.piece.id; render();
+      setTimeout(()=>{
+        if(state.phase!=='cpu_run') return;
+        state.cpuThinkingPiece=null;
+        const finished=applyMove(choice.piece,choice.move,'cpu');
+        render();
+        if(!finished) scheduleCpuMove(430);
+      },220);
+    },delay);
+  }
+
+  function pieceAt(r,c){ return currentPieces().find(p=>p.r===r&&p.c===c)||null; }
+
+  function handleBoardClick(r,c){
+    if(state.phase==='human_setup') return handleSetupClick(r,c);
+    if(state.phase==='human_run') return handleHumanMoveClick(r,c);
+    if(state.phase==='human_traps') return handleTrapPick(r,c);
+  }
+
+  function handleSetupClick(r,c){
+    if(r<7) { liveMessage.textContent='Starting pieces must be in the bottom two rows.'; return; }
+    const existing=state.humanPieces.find(p=>p.r===r&&p.c===c);
+    if(state.setupMode==='leader'){
+      if(!existing){liveMessage.textContent='Choose one of your placed pieces as the leader.';return;}
+      state.humanPieces.forEach(p=>p.leader=false); existing.leader=true; liveMessage.textContent=`Leader selected at ${coord(r,c)}.`; render(); return;
+    }
+    if(existing){ state.humanPieces=state.humanPieces.filter(p=>p.id!==existing.id); liveMessage.textContent='Piece removed.'; render(); return; }
+    const type=state.setupMode;
+    const limit=type==='normal'?4:2;
+    const count=state.humanPieces.filter(p=>p.type===type).length;
+    if(count>=limit){liveMessage.textContent=`You already placed ${limit} ${type} pieces.`;return;}
+    const id=(type==='normal'?'N':'F')+(count+1);
+    state.humanPieces.push({id,type,r,c,leader:false,blockedOnTurn:null});
+    liveMessage.textContent=`${type==='normal'?'Normal':'Fast'} piece placed at ${coord(r,c)}.`; render();
+  }
+
+  function handleHumanMoveClick(r,c){
+    const p=state.humanPieces.find(x=>x.r===r&&x.c===c);
+    if(p){
+      const moves=generateMoves(p,state.humanPieces,0);
+      if(!moves.length && p.blockedOnTurn===state.turn+1){liveMessage.textContent='That piece is stunned for this turn. Move another piece.';return;}
+      state.selectedPiece=p.id; state.legalMoves=moves; liveMessage.textContent=`${p.type}${p.leader?' leader':''} selected.`;render();return;
+    }
+    if(state.selectedPiece){
+      const move=state.legalMoves.find(m=>m.r===r&&m.c===c);
+      if(move){const piece=state.humanPieces.find(x=>x.id===state.selectedPiece);applyMove(piece,move,'human');render();return;}
+    }
+    liveMessage.textContent='Select one of your pieces, then tap a highlighted destination.';
+  }
+
+  function handleTrapPick(r,c){
+    const k=key(r,c);
+    if(!legalTrapCell(r,c)){liveMessage.textContent='Traps must be on empty plain cells in the neutral five rows.';return;}
+    if(state.chosenHumanTraps.has(k)){state.chosenHumanTraps.delete(k);liveMessage.textContent='Trap removed.';render();return;}
+    if(state.chosenHumanTraps.size>=3){liveMessage.textContent='You already placed three traps. Tap one to remove it first.';return;}
+    state.chosenHumanTraps.add(k); liveMessage.textContent=`Trap ${state.chosenHumanTraps.size}/3 set at ${coord(r,c)}.`; render();
+  }
+
+  function setupCounts(){return {normal:state.humanPieces.filter(p=>p.type==='normal').length,fast:state.humanPieces.filter(p=>p.type==='fast').length,leader:state.humanPieces.some(p=>p.leader)};}
+  function setupReady(){const c=setupCounts();return c.normal===4&&c.fast===2&&c.leader;}
+
+  function quickSetup(){
+    if(state.phase!=='human_setup')return;
+    state.humanPieces=[
+      {id:'N1',type:'normal',r:8,c:1,leader:false,blockedOnTurn:null},{id:'N2',type:'normal',r:8,c:4,leader:false,blockedOnTurn:null},
+      {id:'N3',type:'normal',r:8,c:7,leader:false,blockedOnTurn:null},{id:'N4',type:'normal',r:7,c:2,leader:false,blockedOnTurn:null},
+      {id:'F1',type:'fast',r:7,c:4,leader:true,blockedOnTurn:null},{id:'F2',type:'fast',r:7,c:6,leader:false,blockedOnTurn:null}
+    ];
+    state.setupMode='leader'; liveMessage.textContent='Quick setup loaded. Tap a different piece if you want another leader.'; render();
+  }
+
+  function startHumanRun(){
+    if(!setupReady())return;
+    state.phase='human_run'; resetRun('human');
+    addLog('Your run started. CPU traps are hidden.',false); liveMessage.textContent='Select a piece and move toward the top goal row.'; render();
+  }
+
+  function primaryAction(){
+    if(state.phase==='human_setup') startHumanRun();
+    else if(state.phase==='human_result') prepareCpuDefensePhase();
+    else if(state.phase==='human_traps' && state.chosenHumanTraps.size===3) startCpuRun();
+    else if(state.phase==='game_over') restart();
+  }
+
+  function restart(){
+    clearTimeout(cpuTimer); cpuTimer=null; state=initialState(); render();
+  }
+
+  function updatePhaseText(){
+    normalBtn.hidden=fastBtn.hidden=leaderBtn.hidden=quickBtn.hidden=true;
+    primaryBtn.hidden=false; primaryBtn.disabled=false; turnLabel.textContent='turns';
+    const c=setupCounts();
+    if(state.phase==='human_setup'){
+      phaseTitle.textContent='Deploy your pieces';
+      phaseHelp.textContent=`Bottom two rows only. Normal ${c.normal}/4 · Fast ${c.fast}/2 · Leader ${c.leader?'chosen':'not chosen'}. Tap a placed piece again to remove it.`;
+      normalBtn.hidden=fastBtn.hidden=leaderBtn.hidden=quickBtn.hidden=false;
+      primaryBtn.textContent='Start your run'; primaryBtn.disabled=!setupReady();
+      matchStatus.innerHTML='<strong>You are first.</strong> Build your starting formation.';
+      goalLabel.textContent='GOAL'; startLabel.textContent='START';
+    } else if(state.phase==='human_run'){
+      phaseTitle.textContent='Your time attack'; phaseHelp.textContent='Move one piece per turn. Reach the top row with your leader. CPU traps are hidden.';
+      primaryBtn.hidden=true; matchStatus.innerHTML='<strong>Your run is live.</strong> Supplies add points; a leader trap costs 3,000.';
+      goalLabel.textContent='GOAL'; startLabel.textContent='START';
+    } else if(state.phase==='human_result'){
+      phaseTitle.textContent='Your run is complete'; phaseHelp.textContent='Review your score, then set traps for the CPU run.';
+      primaryBtn.textContent='Continue to CPU setup'; matchStatus.innerHTML=`<strong>Your score: ${fmt(state.humanResult.score)}.</strong> Now you become the defender.`;
+      goalLabel.textContent='GOAL'; startLabel.textContent='START';
+    } else if(state.phase==='human_traps'){
+      phaseTitle.textContent='Hide three traps for the CPU'; phaseHelp.textContent=`Tap three legal empty cells in the middle five rows. Selected: ${state.chosenHumanTraps.size}/3.`;
+      primaryBtn.textContent='Start CPU run'; primaryBtn.disabled=state.chosenHumanTraps.size!==3;
+      matchStatus.innerHTML='<strong>CPU is second.</strong> You can see its formation and leader before placing traps.';
+      goalLabel.textContent='CPU START'; startLabel.textContent='CPU GOAL';
+    } else if(state.phase==='cpu_run'){
+      phaseTitle.textContent='CPU time attack'; phaseHelp.textContent='The CPU is choosing moves without access to your hidden trap coordinates.';
+      primaryBtn.hidden=true; matchStatus.innerHTML='<strong>CPU run is live.</strong> Watch for your traps to trigger.';
+      goalLabel.textContent='CPU START'; startLabel.textContent='CPU GOAL';
+    } else if(state.phase==='game_over'){
+      phaseTitle.textContent='Match complete'; phaseHelp.textContent='The two time-attack runs have been scored.';
+      primaryBtn.textContent='Play again'; matchStatus.innerHTML=state.winner==='human'?'<strong>You win.</strong> Your first-run score held up.':'<strong>CPU wins.</strong> Its second run cleared the required score.';
+    }
+    normalBtn.classList.toggle('active',state.setupMode==='normal');fastBtn.classList.toggle('active',state.setupMode==='fast');leaderBtn.classList.toggle('active',state.setupMode==='leader');
+  }
+
+  function renderBoard(){
+    boardEl.replaceChildren();
+    const pieces=currentPieces();
+    const legalSet=new Set(state.legalMoves.map(m=>key(m.r,m.c)));
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+      const btn=document.createElement('button');btn.type='button';btn.className='cell';btn.setAttribute('role','gridcell');
+      const k=key(r,c); const terrain=baseTerrain[r][c];
+      if(state.phase==='human_traps'||state.phase==='cpu_run'){
+        if(r<=1) btn.classList.add('start-zone'); if(r>=7) btn.classList.add('goal-zone');
+      } else { if(r>=7)btn.classList.add('start-zone');if(r<=1)btn.classList.add('goal-zone'); }
+      if(terrain!=='plain')btn.classList.add(terrain);
+      if(state.supplies.has(k) || ((state.phase==='human_setup'||state.phase==='human_traps')&&baseSupplies.has(k))) btn.classList.add('supply');
+      if(legalSet.has(k))btn.classList.add('legal');
+      if(state.selectedPiece && pieces.some(p=>p.id===state.selectedPiece&&p.r===r&&p.c===c))btn.classList.add('selected-cell');
+      if(state.phase==='human_traps'&&state.chosenHumanTraps.has(k))btn.classList.add('trap-pick');
+      if(state.revealedTraps.has(k))btn.classList.add('triggered');
+      const p=pieces.find(x=>x.r===r&&x.c===c);
+      if(p){
+        const div=document.createElement('div');div.className=`piece ${p===undefined?'':(state.phase==='human_setup'||state.phase==='human_run'||state.phase==='human_result'?'human':'cpu')} ${p.type==='fast'?'fast':''} ${p.leader?'leader':''} ${p.blockedOnTurn===state.turn+1?'stunned':''} ${state.cpuThinkingPiece===p.id?'cpu-thinking':''}`;
+        div.textContent=p.type==='fast'?'F':'N';btn.appendChild(div);
+      }
+      if((state.phase==='human_traps'||state.phase==='cpu_run') && state.chosenHumanTraps.has(k)){
+        const m=document.createElement('span');m.className='trap-marker';m.textContent='⚑';m.title='Your hidden trap';btn.appendChild(m);
+      }
+      if(state.revealedTraps.has(k)){
+        const m=document.createElement('span');m.className='trap-marker';m.textContent='×';m.title='Triggered trap';btn.appendChild(m);
+      }
+      btn.setAttribute('aria-label',`${coord(r,c)}${p?`, ${p.type}${p.leader?' leader':''}`:''}${terrain!=='plain'?`, ${terrain}`:''}${state.supplies.has(k)?', supply':''}`);
+      btn.addEventListener('click',()=>handleBoardClick(r,c));
+      if(!['human_setup','human_run','human_traps'].includes(state.phase))btn.disabled=true;
+      boardEl.appendChild(btn);
+    }
+  }
+
+  function renderScore(){
+    speedStat.textContent=fmt(speedBonus(state.turn));supplyStat.textContent=fmt(state.supplyScore);penaltyStat.textContent=state.leaderPenalty?`−${fmt(state.leaderPenalty)}`:'0';totalStat.textContent=fmt(totalScore());turnValue.textContent=state.turn;
+  }
+
+  function renderResults(){
+    resultBox.innerHTML='';
+    if(!state.humanResult && state.phase!=='game_over')return;
+    const box=document.createElement('div');
+    if(state.phase==='game_over')box.className=`result ${state.winner==='human'?'win':'loss'}`;
+    const lines=[];
+    if(state.humanResult) lines.push(`<div class="scoreline"><span>You</span><b>${fmt(state.humanResult.score)} · ${state.humanResult.turns} turns</b></div>`);
+    if(state.cpuResult) lines.push(`<div class="scoreline"><span>CPU</span><b>${fmt(state.cpuResult.score)} · ${state.cpuResult.turns} turns</b></div>`);
+    if(state.humanResult && state.humanResult.score>=5000 && !state.cpuResult){
+      const needed=state.humanResult.leaderHit?state.humanResult.score+3001:state.humanResult.score+1;
+      lines.push(`<div class="small" style="margin-top:8px">CPU must score at least <b>${fmt(needed)}</b> to win as the second player.</div>`);
+    }
+    if(state.phase==='game_over'){
+      if(state.humanResult && state.humanResult.score<5000)lines.push('<div class="small" style="margin-top:8px">v3.5 first-player automatic-loss line applied: score below 5,000.</div>');
+      else if(state.humanResult && state.cpuResult){const needed=state.humanResult.leaderHit?state.humanResult.score+3001:state.humanResult.score+1;lines.push(`<div class="small" style="margin-top:8px">Second-player winning threshold: ${fmt(needed)}.</div>`);}
+    }
+    box.innerHTML=lines.join('');resultBox.appendChild(box);
+  }
+
+  function renderLog(){
+    logEl.replaceChildren();
+    const entries=state.logs.length?state.logs:[{text:'Game ready.',hot:false}];
+    for(const e of entries){const d=document.createElement('div');d.className='log-entry'+(e.hot?' hot':'');d.textContent=typeof e==='string'?e:e.text;logEl.appendChild(d);}
+  }
+
+  function render(){ updatePhaseText();renderBoard();renderScore();renderResults();renderLog(); }
+
+  normalBtn.addEventListener('click',()=>{state.setupMode='normal';liveMessage.textContent='Tap an empty start-zone cell to place a normal piece.';render();});
+  fastBtn.addEventListener('click',()=>{state.setupMode='fast';liveMessage.textContent='Tap an empty start-zone cell to place a fast piece.';render();});
+  leaderBtn.addEventListener('click',()=>{state.setupMode='leader';liveMessage.textContent='Tap one of your placed pieces to make it the leader.';render();});
+  quickBtn.addEventListener('click',quickSetup);primaryBtn.addEventListener('click',primaryAction);restartBtn.addEventListener('click',restart);
+
+  state=initialState();render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TOSEKI / 渡石 — Rules v3.5</title>
+  <style>
+    :root{--paper:#f4efe4;--ink:#171717;--muted:#69645c;--accent:#9b3d2f;--line:rgba(23,23,23,.15)}
+    *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.72}
+    main{width:min(850px,calc(100% - 32px));margin:0 auto;padding:56px 0 80px} a{color:inherit} .back{text-decoration:none;color:var(--muted)}
+    h1{font-size:clamp(2.5rem,7vw,5rem);line-height:1;margin:.25em 0 .2em;letter-spacing:-.045em} h2{margin-top:2.2em;border-top:1px solid var(--line);padding-top:1.1em;font-size:1.65rem} h3{margin-top:1.5em}
+    p,li{color:#292826}.muted{color:var(--muted)} .tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:.82rem;margin-right:6px;background:#fff5}.note{border-left:3px solid var(--accent);padding:8px 14px;background:#fff6}.score{font-weight:800;font-size:1.05rem}
+    table{border-collapse:collapse;width:100%} th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left} th{color:var(--muted)}
+  </style>
+</head>
+<body><main>
+  <a class="back" href="index.html">← Back to TOSEKI overview</a>
+  <h1>TOSEKI <span style="font-size:.42em;color:var(--muted)">渡石</span></h1>
+  <p class="muted">Core Rules v3.5 · English reference for the current prototype</p>
+  <p><span class="tag">2 players</span><span class="tag">9×9 grid</span><span class="tag">hidden traps</span><span class="tag">time attack</span></p>
+
+  <h2>1. Overview</h2>
+  <p>TOSEKI is a two-player strategy game played on a 9×9 grid. Each player makes a separate timed run toward the opponent’s far edge while collecting supplies, reading the terrain, and dealing with three hidden traps set by the opponent.</p>
+
+  <h2>2. Components</h2>
+  <ul><li>A 9×9 grid drawn on paper or another surface.</li><li>Six pieces per player, distinguishable by colour or size.</li><li>Paper and a pen/pencil.</li><li>Three small hidden notes for recording trap coordinates.</li></ul>
+
+  <h2>3. Board</h2>
+  <ul><li><strong>Rows 1–2:</strong> the active player’s home zone.</li><li><strong>Rows 3–7:</strong> neutral zone.</li><li><strong>Rows 8–9:</strong> the opponent’s home zone.</li></ul>
+  <p>Before play, both players agree on the positions of rivers, bridges, mountains and 3–5 supply markers. Rivers and mountains are impassable. Bridges allow passage across rivers.</p>
+
+  <h2>4. Pieces</h2>
+  <ul><li><strong>4 normal pieces:</strong> move 1 square in any of the 8 directions.</li><li><strong>2 fast pieces:</strong> move orthogonally up to 2 squares.</li><li><strong>1 leader:</strong> one of the six pieces is designated as the leader before the run begins.</li></ul>
+
+  <h2>5. Setup and order of play</h2>
+  <ol><li>Decide who makes the first run.</li><li>The first runner places all six pieces in any empty cells in rows 1–2, one piece per cell, and designates a leader.</li><li>The opponent secretly records three legal trap coordinates.</li><li>The first player makes their complete run until the leader reaches row 9.</li><li>Roles are reversed. The second player deploys, the first player sets traps, and the second player makes their run.</li></ol>
+
+  <h2>6. Traps</h2>
+  <p>Each defending player secretly records three trap coordinates. A trap triggers when the runner enters that square.</p>
+  <ul><li><strong>Normal or fast piece:</strong> that piece cannot be moved on its next opportunity; the runner must move another piece on the next turn.</li><li><strong>Leader:</strong> −3,000 points.</li></ul>
+  <p>Traps may be placed only on empty cells in rows 3–7. They may not be placed on bridges, supplies, occupied starting cells, or either home zone.</p>
+
+  <h2>7. Turn sequence</h2>
+  <p>One turn equals one move by one piece. The active player may choose which of their pieces to move each turn. Entering a supply square collects that supply. Entering a trap square triggers it. The run ends immediately when the leader reaches row 9.</p>
+
+  <h2>8. Supplies</h2>
+  <ul><li>Supply collected by a normal piece: <strong>2,000 points</strong>.</li><li>Supply collected by a fast piece: <strong>1,500 points</strong>.</li></ul>
+  <p>Supplies may be placed only in the runner’s home zone or in the neutral zone, not in the opponent’s home zone.</p>
+
+  <h2>9. Speed bonus</h2>
+  <table><thead><tr><th>Finish time</th><th>Bonus</th></tr></thead><tbody>
+    <tr><td>7 turns or fewer</td><td>10,000</td></tr><tr><td>8</td><td>9,000</td></tr><tr><td>9</td><td>8,000</td></tr><tr><td>10</td><td>7,000</td></tr><tr><td>11</td><td>6,000</td></tr><tr><td>12–20</td><td>decrease by 1,000 per turn, reaching 0 at 20</td></tr>
+  </tbody></table>
+
+  <h2>10. Final score</h2>
+  <p class="score">Final score = speed bonus + supply points − leader trap penalty</p>
+  <p><strong>Example:</strong> a 10-turn finish with one normal-piece supply and one fast-piece supply scores 7,000 + 2,000 + 1,500 = <strong>10,500 points</strong>.</p>
+
+  <h2>11. Determining the winner</h2>
+  <ul><li>After both runs, the higher qualifying score wins.</li><li>Normally, the second runner must exceed the first runner’s score by at least 1 point.</li><li>If the first runner’s leader triggered a trap, the second runner must exceed the first score by at least 3,001 points.</li><li>If the second runner does not meet the required margin, the first runner wins.</li><li>If the first runner finishes below 5,000 points, the current v3.5 prototype rule awards an automatic win to the second runner without requiring a run. This value may change after playtesting.</li></ul>
+
+  <h2>12. Map design guidance</h2>
+  <ul><li>If a river is used, two bridges are recommended for the standard game.</li><li>One bridge creates a much harsher choke point; three or more reduce the strategic value of traps.</li><li>Single mountain cells can change approach angles without turning the board into a maze.</li><li>Supply placement and terrain should be agreed upon before the run begins.</li></ul>
+
+  <p class="note"><strong>Prototype note:</strong> TOSEKI is still in development. Numeric balance, edge cases and optional advanced rules may change through further playtesting.</p>
+</main></body></html>

@@ -20,6 +20,8 @@
       --river: #b8d9e7;
       --mountain: #837a6d;
       --supply: #d4aa47;
+      --start-zone: rgba(72,108,84,.10);
+      --goal-zone: rgba(190,152,72,.14);
       --shadow: 0 18px 50px rgba(52,41,24,.10);
       --radius: 24px;
     }
@@ -61,12 +63,12 @@
     .board-head { display:flex; align-items:end; justify-content:space-between; gap:12px; margin-bottom:14px; }
     .board-head strong { font-size:1rem; }
     .board-head span { color:var(--muted); font-size:.8rem; text-align:right; }
-    .board { display:grid; grid-template-columns: repeat(9, 1fr); aspect-ratio:1; border:2px solid rgba(23,23,23,.62); background:#efe8d9; }
-    .cell { position:relative; border-right:1px solid rgba(23,23,23,.27); border-bottom:1px solid rgba(23,23,23,.27); display:grid; place-items:center; min-width:0; }
+    .board { display:grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(9, 1fr); aspect-ratio:1; border:3px solid rgba(23,23,23,.78); background:#efe8d9; }
+    .cell { position:relative; border-right:1.5px solid rgba(23,23,23,.48); border-bottom:1.5px solid rgba(23,23,23,.48); display:grid; place-items:center; min-width:0; }
     .cell:nth-child(9n) { border-right:0; }
     .cell:nth-last-child(-n+9) { border-bottom:0; }
-    .cell.home-a { background:rgba(155,61,47,.08); }
-    .cell.home-b { background:rgba(41,72,95,.08); }
+    .cell.home-a { background:var(--start-zone); }
+    .cell.home-b { background:var(--goal-zone); }
     .cell.river { background:linear-gradient(135deg, rgba(255,255,255,.3), transparent), var(--river); }
     .cell.bridge { background:repeating-linear-gradient(90deg,#c89c62 0 4px,#e2c18e 4px 8px); }
     .cell.mountain::before { content:""; width:64%; height:64%; background:var(--mountain); clip-path:polygon(50% 8%,100% 92%,0 92%); opacity:.9; }
@@ -153,14 +155,106 @@
       <div class="board-card" aria-label="Example TOSEKI board setup">
         <div class="board-head">
           <strong>Example board setup</strong>
-          <span>Illustrative layout<br>traps remain hidden</span>
+          <span>Single-player run example<br>top = goal side / traps remain hidden</span>
         </div>
-        <div class="board" id="board"></div>
+        <div class="board" id="board">
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+          <div class="cell home-b"></div>
+
+          <div class="cell"></div>
+          <div class="cell supply"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell mountain"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+
+          <div class="cell"></div>
+          <div class="cell mountain"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell supply"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+
+          <div class="cell river"></div>
+          <div class="cell river"></div>
+          <div class="cell river"></div>
+          <div class="cell bridge"></div>
+          <div class="cell river"></div>
+          <div class="cell river"></div>
+          <div class="cell river"></div>
+          <div class="cell river"></div>
+          <div class="cell river"></div>
+
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell mountain"></div>
+          <div class="cell supply"></div>
+          <div class="cell"></div>
+
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell supply"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+
+          <div class="cell home-a"></div>
+          <div class="cell home-a"><div class="piece red" aria-label="runner normal"></div></div>
+          <div class="cell home-a"></div>
+          <div class="cell home-a"><div class="piece red fast" aria-label="runner fast"></div></div>
+          <div class="cell home-a"></div>
+          <div class="cell home-a"><div class="piece red" aria-label="runner normal"></div></div>
+          <div class="cell home-a"></div>
+          <div class="cell home-a"></div>
+          <div class="cell home-a"></div>
+
+          <div class="cell home-a"><div class="piece red" aria-label="runner normal"></div></div>
+          <div class="cell home-a"></div>
+          <div class="cell home-a"><div class="piece red fast leader" aria-label="runner fast leader"></div></div>
+          <div class="cell home-a"></div>
+          <div class="cell home-a"><div class="piece red" aria-label="runner normal"></div></div>
+          <div class="cell home-a"></div>
+          <div class="cell home-a"></div>
+          <div class="cell home-a"><div class="piece red" aria-label="runner normal"></div></div>
+          <div class="cell home-a"></div>
+        </div>
         <div class="legend">
-          <span><b>●</b> normal piece</span>
+          <span><b>●</b> runner piece</span>
           <span><b>◎</b> fast piece</span>
           <span><b>★</b> leader</span>
           <span><b>◆</b> supply</span>
+          <span><b>bottom 2 rows</b> start zone</span>
+          <span><b>top 2 rows</b> opponent territory / goal side</span>
           <span><b>blue</b> river</span>
           <span><b>brown</b> bridge / mountain</span>
         </div>
@@ -176,7 +270,7 @@
         <div class="intro-grid">
           <div class="card"><div class="stat">6</div><div class="stat-label">pieces per player</div><p>Four normal pieces and two fast pieces. Before the run begins, one of those six is designated as the leader.</p></div>
           <div class="card"><div class="stat">3</div><div class="stat-label">secret traps</div><p>The defending player records three legal trap coordinates. The runner cannot see them until they are triggered.</p></div>
-          <div class="card"><div class="stat">1</div><div class="stat-label">leader must reach row 9</div><p>The run ends as soon as the leader reaches the farthest row of the opponent’s side.</p></div>
+          <div class="card"><div class="stat">1</div><div class="stat-label">leader must reach row 9</div><p>Only one player’s pieces are on the board during a run. The run ends as soon as that player’s leader reaches the farthest row of the opponent’s side.</p></div>
         </div>
       </div>
     </section>
@@ -275,41 +369,6 @@
     <div class="wrap">TOSEKI / 渡石 · Prototype documentation · Rules v3.5</div>
   </footer>
 
-  <script>
-    // 9×9 illustrative example. Row 1 is at the bottom visually.
-    const map = Array.from({length: 81}, () => ({type:"plain"}));
-    const idx = (r,c) => (9-r)*9 + (c-1);
-    const set = (r,c,type) => map[idx(r,c)] = {type};
-    const piece = (r,c,color,kind,leader=false) => map[idx(r,c)] = {type:"piece",color,kind,leader};
 
-    // Terrain
-    [[5,1],[5,2],[5,3],[5,5],[5,6],[5,7],[5,8],[5,9]].forEach(([r,c])=>set(r,c,"river"));
-    set(5,4,"bridge");
-    [[4,7],[6,2],[7,6]].forEach(([r,c])=>set(r,c,"mountain"));
-    [[3,3],[4,8],[6,5],[7,2]].forEach(([r,c])=>set(r,c,"supply"));
-
-    // Example deployment
-    piece(1,2,"red","normal"); piece(1,4,"red","fast",true); piece(1,7,"red","normal");
-    piece(2,3,"red","normal"); piece(2,6,"red","fast"); piece(2,8,"red","normal");
-    piece(9,2,"blue","normal"); piece(9,5,"blue","fast",true); piece(9,8,"blue","normal");
-    piece(8,3,"blue","fast"); piece(8,6,"blue","normal"); piece(8,9,"blue","normal");
-
-    const board = document.getElementById("board");
-    map.forEach((item, visualIndex) => {
-      const cell = document.createElement("div");
-      const rowFromTop = Math.floor(visualIndex / 9) + 1;
-      const boardRow = 10 - rowFromTop;
-      if (boardRow <= 2) cell.classList.add("home-a");
-      if (boardRow >= 8) cell.classList.add("home-b");
-      if (["river","bridge","mountain","supply"].includes(item.type)) cell.classList.add(item.type);
-      if (item.type === "piece") {
-        const token = document.createElement("div");
-        token.className = `piece ${item.color} ${item.kind === "fast" ? "fast" : ""} ${item.leader ? "leader" : ""}`;
-        token.setAttribute("aria-label", `${item.color} ${item.kind}${item.leader ? " leader" : ""}`);
-        cell.appendChild(token);
-      }
-      board.appendChild(cell);
-    });
-  </script>
 </body>
 </html>
